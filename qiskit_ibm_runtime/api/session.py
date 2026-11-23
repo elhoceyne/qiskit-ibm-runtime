@@ -110,15 +110,15 @@ class PostForcelistRetry(Retry):
     the IBM Quantum API guarantees that retrying on specific 5xx errors is safe.
     """
 
-    def increment(  # type: ignore[no-untyped-def]
+    def increment(
         self,
-        method=None,
-        url=None,
-        response=None,
-        error=None,
-        _pool=None,
-        _stacktrace=None,
-    ):
+        method: str | None = None,
+        url: str | None = None,
+        response: Any | None = None,
+        error: Exception | None = None,
+        _pool: Any | None = None,
+        _stacktrace: Any | None = None,
+    ) -> Retry:
         """Overwrites parent class increment method for logging."""
         if logger.getEffectiveLevel() is logging.DEBUG:
             status = data = headers = None
@@ -279,7 +279,7 @@ class RetrySession(Session):
         if not self.proxies and "timeout" not in kwargs:
             kwargs.update({"timeout": self._timeout})
 
-        headers = self.headers.copy()  # type: ignore
+        headers = dict(self.headers)
         headers.update(kwargs.pop("headers", {}))
 
         # Set default caller
@@ -443,15 +443,17 @@ class RetrySession(Session):
 
     def _set_custom_header(self) -> None:
         """Set custom header."""
-        headers = self.headers.copy()  # type: ignore
+        headers = dict(self.headers)
         if self.custom_header:
-            current = headers["X-Qx-Client-Application"]
+            raw_current = headers.get("X-Qx-Client-Application", "")
+            current = raw_current.decode() if isinstance(raw_current, bytes) else str(raw_current)
             if self.custom_header not in current:
                 headers.update({"X-Qx-Client-Application": f"{current}/{self.custom_header}"})
-                self.headers = headers
+                self.headers.update(headers)
 
     def __getstate__(self) -> dict:
         """Overwrite Session's getstate to include all attributes."""
-        state = super().__getstate__()  # type: ignore
+        getstate = getattr(super(), "__getstate__", None)
+        state = getstate() if callable(getstate) else {}
         state.update(self.__dict__)
         return state

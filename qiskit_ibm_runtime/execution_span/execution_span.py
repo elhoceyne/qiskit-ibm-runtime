@@ -98,7 +98,7 @@ class ExecutionSpan(abc.ABC):
             span.filter_by_pub(2).size
 
         """
-        return sum(self.mask(pub_idx).sum() for pub_idx in self.pub_idxs)
+        return int(sum(int(self.mask(pub_idx).sum()) for pub_idx in self.pub_idxs))
 
     @abc.abstractmethod
     def mask(self, pub_idx: int) -> npt.NDArray[np.bool_]:
